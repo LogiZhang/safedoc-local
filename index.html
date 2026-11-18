@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>票证私盒 SafeDoc Local — 电子发票A4省纸拼版 · 证件防盗用水印 · 合同本地脱敏</title>
+  <meta name="description" content="100%纯浏览器本地断网运行的票据与证件隐私工作台。支持PDF电子发票一页A4合并打印（预留财务装订线）、身份证营业执照正反面A4合版与防盗用水印批处理、合同敏感信息不可逆像素级脱敏。零服务器上传，一次买断永久可用。">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Real-time Local Privacy & Network Isolation Proof Bar -->
+  <div class="privacy-strip" role="status" aria-live="polite">
+    <div class="privacy-strip__status">
+      <span class="status-dot" id="network-dot"></span>
+      <span id="privacy-proof-text">隐私安全承诺：所有发票、身份证、合同均 100% 在您本机内存中处理，0 字节上传云端（支持直接拔掉网线断网使用）</span>
+    </div>
+    <div class="privacy-strip__meta" id="network-state-label">外网传输请求: 0 B · 断网可用</div>
+  </div>
+
+  <!-- Application Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <div class="brand__seal" aria-hidden="true">私盒</div>
+        <div>
+          <h1 class="brand__title">票证私盒 SafeDoc Local</h1>
+          <p class="brand__subtitle">财务报销贴票 · 证件防盗用水印 · 法务脱敏纯本地工作台</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span class="license-badge" id="license-status-badge">当前版本：免费体验版</span>
+        <button type="button" class="btn btn--outline btn--sm" id="btn-load-demo">加载示例文件秒体验</button>
+        <button type="button" class="btn btn--primary btn--sm" id="btn-open-activate">解锁 Pro 永久买断版</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Studio Workspace -->
+  <main class="workspace-shell">
+    <!-- Tool Switcher Tabs -->
+    <nav class="tool-tabs" role="tablist" aria-label="核心处理工具切换">
+      <button type="button" class="tool-tab" role="tab" id="tab-btn-invoice" aria-selected="true" aria-controls="panel-invoice" data-tab="invoice">
+        <span class="tool-tab__kicker"><span>01 · 财务报销高频刚需</span><span>支持 PDF / 图片</span></span>
+        <span class="tool-tab__name">电子发票 A4 省纸拼版打印</span>
+        <span class="tool-tab__desc">一页 A4 排 2 张或 4 张，预留 15mm 左侧装订线与裁剪虚线</span>
+      </button>
+
+      <button type="button" class="tool-tab" role="tab" id="tab-btn-watermark" aria-selected="false" aria-controls="panel-watermark" data-tab="watermark">
+        <span class="tool-tab__kicker"><span>02 · 入职 / 租房 / 年审</span><span>正反面合版</span></span>
+        <span class="tool-tab__name">身份证 / 营业执照 防盗用水印</span>
+        <span class="tool-tab__desc">满屏斜向防伪水印、正反面 1:1 居中合成 A4、多图批量打包</span>
+      </button>
+
+      <button type="button" class="tool-tab" role="tab" id="tab-btn-redact" aria-selected="false" aria-controls="panel-redact" data-tab="redact">
+        <span class="tool-tab__kicker"><span>03 · 合同 / 报价单保密</span><span>不可逆销毁</span></span>
+        <span class="tool-tab__name">敏感信息像素级涂黑脱敏</span>
+        <span class="tool-tab__desc">框选即彻底销毁底层像素，杜绝假黑框被复制或反马赛克泄密</span>
+      </button>
+    </nav>
+
+    <!-- ==================================================================
+         PANEL 1: Electronic Invoice A4 Merger
+         ================================================================== -->
+    <section class="studio-panel is-active" id="panel-invoice" role="tabpanel" aria-labelledby="tab-btn-invoice">
+      <aside class="control-card">
+        <div class="control-section">
+          <p class="section-label">
+            <span>1. 导入电子发票或收据</span>
+            <span id="invoice-count-label">已选 0 张</span>
+          </p>
+          <label class="dropzone" id="invoice-dropzone" for="invoice-file-input">
+            <span class="dropzone__title">点击选择 或 拖入多张 PDF / 图片发票</span>
+            <span class="dropzone__hint">本机解析 PDF 矢量文字，高清不糊（支持多选）</span>
+            <input type="file" id="invoice-file-input" class="visually-hidden" accept=".pdf,image/png,image/jpeg,image/webp" multiple>
+          </label>
+          <ul class="file-queue" id="invoice-file-list" aria-label="已导入发票列表"></ul>
+        </div>
+
+        <div class="control-section">
+          <p class="section-label"><span>2. A4 拼版布局与财务规范</span></p>
+          <div class="field-group">
+            <span class="field-label">每页 A4 排布张数</span>
+            <div class="segmented-group" role="group" aria-label="每页排布张数">
+              <button type="button" class="seg-btn is-selected" id="inv-layout-2" data-inv-layout="2">一页 2 张（上下对开）</button>
+              <button type="button" class="seg-btn" id="inv-layout-4" data-inv-layout="4">一页 4 张（四宫格）</button>
+            </div>
+          </div>
+
+          <label class="checkbox-row" for="inv-binding-margin">
+            <input type="checkbox" id="inv-binding-margin" checked>
+            <span>预留左侧 15mm 财务装订线（打孔装订不压发票代码与金额）</span>
+          </label>
+
+          <label class="checkbox-row" for="inv-cut-lines">
+            <input type="checkbox" id="inv-cut-lines" checked>
+            <span>绘制裁剪辅助虚线与分区序号标记</span>
+          </label>
+
+          <label class="checkbox-row" for="inv-summary-sheet">
+            <input type="checkbox" id="inv-summary-sheet">
+            <span>自动附加「报销票据打印汇总签字单」尾页 <span class="pro-tag">PRO</span></span>
+          </label>
+
+          <div class="field-group" id="inv-summary-fields" style="display: none;">
+            <input type="text" class="text-input" id="inv-claimant-input" placeholder="报销人 / 部门（选填，如：张三 · 市场部）">
+          </div>
+        </div>
+
+        <div class="control-section">
+          <button type="button" class="btn btn--primary btn--block" id="btn-export-invoice-pdf" disabled>
+            导出高清可打印 A4 PDF
+          </button>
+          <div class="limit-banner" id="inv-free-hint">
+            免费体验版每次可导出前 <strong>2 张</strong> 发票（1 页 A4）以验证打印清晰度；解锁 Pro 版（¥19.9 永久买断）可一次拖入 50+ 张批量拼版并生成汇总单。
+          </div>
+        </div>
+      </aside>
+
+      <div class="preview-stage">
+        <div class="preview-stage__toolbar">
+          <span class="preview-stage__meta" id="inv-preview-meta">A4 纸张实时排版预览（210mm × 297mm）</span>
+          <div style="display: flex; gap: 0.45rem; align-items: center;">
+            <button type="button" class="btn btn--outline btn--sm" id="btn-inv-prev-page" disabled>上一页</button>
+            <span class="preview-stage__meta" id="inv-page-indicator">第 1 / 1 页</span>
+            <button type="button" class="btn btn--outline btn--sm" id="btn-inv-next-page" disabled>下一页</button>
+            <button type="button" class="btn btn--outline btn--sm" id="btn-inv-clear" disabled>清空列表</button>
+          </div>
+        </div>
+        <div class="preview-canvas-wrap" id="inv-canvas-container">
+          <div class="empty-state" id="inv-empty-state">
+            <p class="empty-state__title">拖入电子发票 PDF 或截图，即刻生成标准 A4 贴票版</p>
+            <p class="empty-state__desc">无需登录，无需上传服务器。您也可以点击右上角「加载示例文件秒体验」立即查看效果。</p>
+            <button type="button" class="btn btn--dark btn--sm" id="btn-inv-demo-inline">一键生成 4 张示例电子发票预览</button>
+          </div>
+          <canvas id="invoice-preview-canvas" class="paper-canvas" style="display: none;"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================
+         PANEL 2: ID Card & License Anti-Fraud Watermark Studio
+         ================================================================== -->
+    <section class="studio-panel" id="panel-watermark" role="tabpanel" aria-labelledby="tab-btn-watermark">
+      <aside class="control-card">
+        <div class="control-section">
+          <p class="section-label">
+            <span>1. 选择证件照片（支持多选）</span>
+            <span id="wm-count-label">已选 0 张</span>
+          </p>
+          <label class="dropzone" id="wm-dropzone" for="wm-file-input">
+            <span class="dropzone__title">导入身份证正反面 / 营业执照 / 房产证</span>
+            <span class="dropzone__hint">支持 JPG / PNG / WebP，断网本地合成</span>
+            <input type="file" id="wm-file-input" class="visually-hidden" accept="image/png,image/jpeg,image/webp" multiple>
+          </label>
+          <ul class="file-queue" id="wm-file-list" aria-label="已导入证件图片列表"></ul>
+        </div>
+
+        <div class="control-section">
+          <p class="section-label"><span>2. 输出排版模式</span></p>
+          <div class="segmented-group" role="group" aria-label="证件输出模式">
+            <button type="button" class="seg-btn is-selected" id="wm-mode-single" data-wm-mode="single">原图尺寸加水印</button>
+            <button type="button" class="seg-btn" id="wm-mode-a4pair" data-wm-mode="a4pair">正反双图合 A4 页 <span class="pro-tag">PRO</span></button>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <p class="section-label"><span>3. 防盗用水印文案与样式</span></p>
+          <div class="field-group">
+            <label class="field-label" for="wm-text-input">水印文字（自动附加防涂改日期）</label>
+            <input type="text" class="text-input" id="wm-text-input" value="仅供入职背景调查核验使用，他用无效">
+            <div class="preset-chips">
+              <button type="button" class="chip-btn" data-wm-preset="仅供入职背景调查核验使用，他用无效">入职背调</button>
+              <button type="button" class="chip-btn" data-wm-preset="仅供房屋租赁备案使用，再次复印无效">租房备案</button>
+              <button type="button" class="chip-btn" data-wm-preset="仅供企业工商年审与银行开户使用，他用无效">开户年审</button>
+              <button type="button" class="chip-btn" data-wm-preset="仅供通信运营商实名办卡使用，他用无效">实名办卡</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">印章墨色</span>
+            <div class="color-swatches" role="group" aria-label="水印颜色">
+              <button type="button" class="swatch-btn is-selected" id="wm-color-red" data-wm-color="#C4302B" style="background: #C4302B;" title="印泥朱红"></button>
+              <button type="button" class="swatch-btn" id="wm-color-ink" data-wm-color="#1E293B" style="background: #1E293B;" title="档案碳黑"></button>
+              <button type="button" class="swatch-btn" id="wm-color-blue" data-wm-color="#1D4ED8" style="background: #1D4ED8;" title="政务防伪蓝"></button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="wm-opacity-range">
+              <span>水印浓度</span>
+              <span id="wm-opacity-val">28%</span>
+            </label>
+            <input type="range" id="wm-opacity-range" min="10" max="65" value="28">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="wm-density-range">
+              <span>铺满密度</span>
+              <span id="wm-density-val">标准</span>
+            </label>
+            <input type="range" id="wm-density-range" min="1" max="3" step="1" value="2">
+          </div>
+
+          <label class="checkbox-row" for="wm-append-date">
+            <input type="checkbox" id="wm-append-date" checked>
+            <span>水印末尾自动附带今日日期戳</span>
+          </label>
+
+          <label class="checkbox-row" for="wm-anti-ai-grain">
+            <input type="checkbox" id="wm-anti-ai-grain">
+            <span>叠加微噪点防 PS / AI 去水印干扰纹 <span class="pro-tag">PRO</span></span>
+          </label>
+        </div>
+
+        <div class="control-section" style="display: flex; flex-direction: column; gap: 0.55rem;">
+          <button type="button" class="btn btn--primary btn--block" id="btn-export-wm-single" disabled>
+            下载当前高清防伪图 (PNG)
+          </button>
+          <button type="button" class="btn btn--dark btn--block" id="btn-export-wm-batch" disabled>
+            批量导出全部 / 导出标准 A4 打印版 (PRO)
+          </button>
+        </div>
+      </aside>
+
+      <div class="preview-stage">
+        <div class="preview-stage__toolbar">
+          <span class="preview-stage__meta" id="wm-preview-meta">证件防盗用水印实时画布预览</span>
+          <button type="button" class="btn btn--outline btn--sm" id="btn-wm-clear" disabled>清空证件</button>
+        </div>
+        <div class="preview-canvas-wrap">
+          <div class="empty-state" id="wm-empty-state">
+            <p class="empty-state__title">拒绝裸奔发送身份证与营业执照原图</p>
+            <p class="empty-state__desc">导入证件后自动铺满斜向防盗用水印，或将正反面两张照片一键居中合成到同一页 A4 纸打印。</p>
+            <button type="button" class="btn btn--dark btn--sm" id="btn-wm-demo-inline">生成示例证件照体验水印效果</button>
+          </div>
+          <canvas id="wm-preview-canvas" class="paper-canvas" style="display: none;"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================
+         PANEL 3: Irreversible Pixel Redactor
+         ================================================================== -->
+    <section class="studio-panel" id="panel-redact" role="tabpanel" aria-labelledby="tab-btn-redact">
+      <aside class="control-card">
+        <div class="control-section">
+          <p class="section-label"><span>1. 导入需要脱敏的合同或账单</span></p>
+          <label class="dropzone" id="redact-dropzone" for="redact-file-input">
+            <span class="dropzone__title">导入合同 PDF 或 敏感截图</span>
+            <span class="dropzone__hint">在右侧画布上按住鼠标左键拖拽框选即可彻底抹除</span>
+            <input type="file" id="redact-file-input" class="visually-hidden" accept=".pdf,image/png,image/jpeg,image/webp">
+          </label>
+        </div>
+
+        <div class="control-section">
+          <p class="section-label"><span>2. 像素销毁笔刷样式</span></p>
+          <div class="segmented-group segmented-group--3" role="group" aria-label="脱敏样式">
+            <button type="button" class="seg-btn is-selected" id="redact-style-black" data-redact-style="black">法务纯黑条</button>
+            <button type="button" class="seg-btn" id="redact-style-mosaic" data-redact-style="mosaic">重度像素格</button>
+            <button type="button" class="seg-btn" id="redact-style-hatch" data-redact-style="hatch">机密斜纹章</button>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--ink-secondary); margin: 0.75rem 0 0;">
+            安全原理：普通 PDF 编辑器画黑框仍保留底层可复制文字；本工具在导出时直接重绘单层位图，物理销毁选区内的原始像素与文本层，不可逆还原。
+          </p>
+        </div>
+
+        <div class="control-section" style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn--outline" style="flex: 1;" id="btn-redact-undo" disabled>撤销上一处</button>
+          <button type="button" class="btn btn--outline" style="flex: 1;" id="btn-redact-reset" disabled>清除全部选区</button>
+        </div>
+
+        <div class="control-section" style="display: flex; flex-direction: column; gap: 0.55rem;">
+          <button type="button" class="btn btn--primary btn--block" id="btn-export-redact-png" disabled>
+            导出已脱敏安全图片 (PNG)
+          </button>
+          <button type="button" class="btn btn--dark btn--block" id="btn-export-redact-pdf" disabled>
+            导出不可逆脱敏 PDF 文档 <span class="pro-tag" style="margin-left: 0.25rem;">PRO 多页</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="preview-stage">
+        <div class="preview-stage__toolbar">
+          <span class="preview-stage__meta" id="redact-preview-meta">在画布上按住鼠标左键框选姓名、卡号、底价即可抹除</span>
+          <div style="display: flex; gap: 0.45rem; align-items: center;">
+            <button type="button" class="btn btn--outline btn--sm" id="btn-redact-prev" disabled>上一页</button>
+            <span class="preview-stage__meta" id="redact-page-indicator">第 1 / 1 页</span>
+            <button type="button" class="btn btn--outline btn--sm" id="btn-redact-next" disabled>下一页</button>
+          </div>
+        </div>
+        <div class="preview-canvas-wrap">
+          <div class="empty-state" id="redact-empty-state">
+            <p class="empty-state__title">真·物理像素销毁，防止「假马赛克」泄密</p>
+            <p class="empty-state__desc">导入合同或聊天账单截图后，直接用鼠标框选需要隐藏的身份证号、银行卡号或商业底价。</p>
+            <button type="button" class="btn btn--dark btn--sm" id="btn-redact-demo-inline">加载示例保密合同立即试画</button>
+          </div>
+          <canvas id="redact-preview-canvas" class="paper-canvas paper-canvas--crosshair" style="display: none;"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="value-footer">
+    <div>
+      <strong>票证私盒 SafeDoc Local v1.0</strong> · 纯本地零上传架构 · 兼容 Windows / macOS / 现代浏览器离线运行
+    </div>
+    <div>
+      拒绝 ¥98/年 自动续费办公会员 · 一次买断永久本机授权
+    </div>
+  </footer>
+
+  <!-- ====================================================================
+       License Activation & Instant Auto-Delivery Purchase Modal
+       ==================================================================== -->
+  <div class="modal-backdrop" id="activate-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-dialog">
+      <div class="modal-dialog__header">
+        <div>
+          <h2 class="modal-dialog__title" id="modal-title">解锁票证私盒 Pro 永久买断版</h2>
+          <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--ink-secondary);">
+            支持微信 / 支付宝付款，24 小时全自动秒发激活码，无需注册登录
+          </p>
+        </div>
+        <button type="button" class="modal-close" id="btn-close-modal" aria-label="关闭窗口">&times;</button>
+      </div>
+
+      <div class="pricing-tiers">
+        <div class="tier-box tier-box--highlight">
+          <p class="tier-box__name">个人终身买断版</p>
+          <p class="tier-box__price">¥19.9 <del>¥49</del></p>
+          <ul class="tier-box__list">
+            <li>无限张数电子发票批量 A4 拼版</li>
+            <li>自动生成报销汇总签字尾页</li>
+            <li>身份证正反面一键合成标准 A4</li>
+            <li>多图防盗用水印 ZIP 批量打包</li>
+            <li>多页合同 PDF 连续脱敏导出</li>
+          </ul>
+        </div>
+
+        <div class="tier-box">
+          <p class="tier-box__name">财务 / 工作室多机版</p>
+          <p class="tier-box__price">¥49.9 <del>¥129</del></p>
+          <ul class="tier-box__list">
+            <li>包含个人版全部高级功能</li>
+            <li>支持团队 / 财务室最多 5 台电脑激活</li>
+            <li>附赠离线单机归档部署指南</li>
+            <li>后续全部版本免费升级权益</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.15rem;">
+        <a href="#purchase" target="_blank" rel="noopener" class="btn btn--primary btn--block" id="btn-buy-link">
+          前往自动发卡收银台获取激活码（微信 / 支付宝秒发）
+        </a>
+        <p style="margin: 0.4rem 0 0; font-size: 0.74rem; color: var(--ink-muted); text-align: center;" id="buy-link-hint">
+          付款后页面当场显示 `SDPRO-` 开头的专属激活码，复制粘贴至下方即可永久激活
+        </p>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-hairline); padding-top: 1rem;">
+        <label class="field-label" for="license-code-input">已有激活码？在此输入立即本机永久激活：</label>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" class="text-input" id="license-code-input" placeholder="例如：SDPRO-PXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" style="font-family: var(--font-mono); text-transform: uppercase;">
+          <button type="button" class="btn btn--dark" id="btn-verify-license" style="white-space: nowrap;">立即激活</button>
+        </div>
+        <div id="license-feedback" class="feedback-msg" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Local Bundled PDF.js Engine (Zero External CDN Requests, Supports file:// Double-Click) -->
+  <script src="./vendor/pdf.worker.js"></script>
+  <script src="./vendor/pdf.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
